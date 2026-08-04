@@ -1,24 +1,24 @@
-def collect_statistics(request_results):
+def collect_statistics(responses: list[dict]) -> dict:
     success = 0
     failed = 0
     errors = 0
     times = []
-    for res in request_results:
-        if 'error' in res:
-            errors += 1
-        elif res['is_success']:
-            success += 1
-            times.append(res['elapsed'])
-        else:
-            failed += 1
-            times.append(res['elapsed'])
 
-    if times:
-        min_time = min(times)
-        max_time = max(times)
-        avg_time = sum(times) / len(times)
-    else:
-        min_time = max_time = avg_time = 0.0
+    for response in responses:
+        if 'error' in response:
+            errors += 1
+        elif 'status_code' in response:
+            if 200 <= response['status_code'] < 400:
+                success += 1
+            else:
+                failed += 1
+
+            if 'elapsed' in response and response['elapsed'] is not None:
+                times.append(response['elapsed'])
+
+    min_time = min(times) if times else 0.0
+    max_time = max(times) if times else 0.0
+    avg_time = sum(times) / len(times) if times else 0.0
 
     return {
         'success': success,
@@ -28,4 +28,3 @@ def collect_statistics(request_results):
         'max': max_time,
         'avg': avg_time
     }
-

@@ -2,6 +2,27 @@ import argparse
 from urllib.parse import urlparse
 
 
+def validate_hosts(value: str):
+    hosts = [h.strip() for h in value.split(',') if h.strip()]
+    for host in hosts:
+        parsed = urlparse(host)
+        if not (parsed.scheme in ('http', 'https') and parsed.netloc):
+            raise argparse.ArgumentTypeError(
+                f"Некорректный URL: {host}. Ожидается формат https://example.com"
+            )
+    return hosts
+
+
+def validate_count(value: str):
+    try:
+        count = int(value)
+        if count < 1:
+            raise argparse.ArgumentTypeError("Количество запросов должно быть >= 1")
+        return count
+    except ValueError:
+        raise argparse.ArgumentTypeError("Количество запросов должно быть числом")
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='http-bench-service',
@@ -35,26 +56,4 @@ def parse_args():
         type=str,
         help='Файл со списком хостов (один на строку)'
     )
-
     return parser.parse_args()
-
-
-def validate_count(value: str):
-    try:
-        count = int(value)
-        if count < 1:
-            raise argparse.ArgumentTypeError("Количество запросов должно быть >= 1")
-        return count
-    except ValueError:
-        raise argparse.ArgumentTypeError("Количество запросов должно быть числом")
-
-
-def validate_hosts(value: str):
-    hosts = [h.strip() for h in value.split(',') if h.strip()]
-    for host in hosts:
-        parsed = urlparse(host)
-        if not (parsed.scheme in ('http', 'https') and parsed.netloc):
-            raise argparse.ArgumentTypeError(
-                f"Некорректный URL: {host}. Ожидается формат https://example.com"
-            )
-    return hosts

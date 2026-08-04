@@ -10,11 +10,11 @@ class BenchmarkService:
         self._io_client = FileIOClient()
 
     async def benchmark(
-        self,
-        hosts: list[str] | None = None,
-        count: int = 1,
-        input_file: str | None = None,
-        output_file: str | None = None
+            self,
+            hosts: list[str] | None = None,
+            count: int = 1,
+            input_file: str | None = None,
+            output_file: str | None = None
     ):
         if hosts and input_file:
             raise HttpBenchBaseException("Нельзя одновременно указывать -H и -F")
@@ -23,20 +23,34 @@ class BenchmarkService:
         if not target_hosts:
             raise HttpBenchBaseException("Список хостов пуст")
 
-        results = {}
+        tasks = []
+        task_to_host = []
         for host in target_hosts:
-            tasks = [self._http_client.get(host) for _ in range(count)]
-            responses = await asyncio.gather(*tasks, return_exceptions=True)
-            processed = []
-            for res in responses:
-                if isinstance(res, Exception):
-                    processed.append({'url': host, 'error': str(res)})
-                else:
-                    processed.append(res)
-            stats = collect_statistics(processed)
+            for _ in range(count):
+                task = self._http_client.get(host)
+                tasks.append(task)
+                task_to_host.append(host)
+
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+        host_responses = {}
+        for host, response in zip(task_to_host, responses):
+            if host not in host_responses:
+                host_responses[host] = []
+
+            if isinstance(response, Exception):
+                host_responses[host].append({'url': host, 'error': str(response)})
+            else:
+                host_responses[host].append(response)
+
+        unique_hosts = list(dict.fromkeys(target_hosts))
+        results = {}
+        for host in unique_hosts:
+            stats = collect_statistics(host_responses[host])
             results[host] = stats
 
         output_text = self._format_results(results)
+
         if output_file:
             self._io_client.write_lines(output_file, [output_text])
             print(f"Результаты сохранены в {output_file}")
