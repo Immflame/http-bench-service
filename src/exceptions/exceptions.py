@@ -1,0 +1,2 @@
+class HttpBenchBaseException(Exception):
+    pass
