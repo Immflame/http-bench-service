@@ -59,7 +59,8 @@ class BenchmarkService:
 
         await self._http_client.close()
 
-    def _format_results(self, results: dict) -> str:
+    @staticmethod
+    def _format_results(results: dict) -> str:
         lines = []
         lines.append("*" * 60)
         lines.append("РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ")
