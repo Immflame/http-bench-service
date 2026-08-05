@@ -26,5 +26,9 @@ async def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":
+def start():
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    start()
