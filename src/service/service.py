@@ -1,7 +1,8 @@
 import asyncio
 from src.client import AsyncHTTPClient, FileIOClient
-from src.utils import format_benchmark_report
+from src.utils.report import format_benchmark_report
 from src.exceptions import HttpBenchBaseException
+from src.utils.validators import validate_hosts_list
 
 
 class BenchmarkService:
@@ -27,6 +28,8 @@ class BenchmarkService:
         target_hosts = hosts if hosts else self._io_client.read_lines(input_file)
         if not target_hosts:
             raise HttpBenchBaseException("Список хостов пуст")
+
+        target_hosts = validate_hosts_list(target_hosts)
 
         async with self._http_client as http_client:
             coroutines = []

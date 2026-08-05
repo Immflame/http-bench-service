@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "http-bench-service"
-version = "0.1.1"
+version = "0.1.2"
 description = "HTTP benchmark service"
 readme = "README.md"
 authors = [
@@ -16,7 +16,7 @@ dependencies = [
 requires-python = ">=3.10"
 
 [project.scripts]
-bench = "src.main:start"
+bench = "src.main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

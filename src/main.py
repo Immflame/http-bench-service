@@ -1,34 +1,11 @@
 import asyncio
-import sys
-from src.cli import parse_args
-from src.service.service import BenchmarkService
-from src.exceptions import HttpBenchBaseException
+from src.cli import cli
 
 
-async def main():
-
-    """ Точка входа в программу """
-
-    args = parse_args()
-    service = BenchmarkService()
-    try:
-        await service.benchmark(
-            hosts=args.hosts,
-            count=args.count,
-            input_file=args.file,
-            output_file=args.output
-        )
-    except HttpBenchBaseException as e:
-        print(f"Ошибка: {e}", file=sys.stderr)
-        sys.exit(1)
-    except Exception as e:
-        print(f"Неожиданная ошибка: {e}", file=sys.stderr)
-        sys.exit(1)
-
-
-def start():
-    asyncio.run(main())
+def main():
+    """ Точка входа """
+    asyncio.run(cli())
 
 
 if __name__ == "__main__":
-    start()
+    main()

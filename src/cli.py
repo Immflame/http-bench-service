@@ -1,9 +1,14 @@
 import argparse
-from urllib.parse import urlparse
+import sys
+from src.service.service import BenchmarkService
+from src.exceptions import HttpBenchBaseException
+from src.utils.validators import validate_hosts_str, validate_count
 
 
-def parse_args():
-    """ Парсит аргументы командной строки """
+async def cli():
+
+    """ Парсит аргументы командной строки и запускает бенчмарки """
+
     parser = argparse.ArgumentParser(
         prog='http-bench-service',
         description='Тестирование доступности HTTP-серверов',
@@ -27,7 +32,7 @@ def parse_args():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         '-H', '--hosts',
-        type=validate_hosts,
+        type=validate_hosts_str,
         help='Хосты через запятую (например: https://ya.ru,https://google.com)'
     )
 
@@ -36,27 +41,20 @@ def parse_args():
         type=str,
         help='Файл со списком хостов (один на строку)'
     )
-    return parser.parse_args()
 
+    args = parser.parse_args()
 
-def validate_hosts(value: str):
-    """ Кастомная валидация аргумента -H/--hosts """
-    hosts = [h.strip() for h in value.split(',') if h.strip()]
-    for host in hosts:
-        parsed = urlparse(host)
-        if not (parsed.scheme in ('http', 'https') and parsed.netloc):
-            raise argparse.ArgumentTypeError(
-                f"Некорректный URL: {host}. Ожидается формат https://example.com"
-            )
-    return hosts
-
-
-def validate_count(value: str):
-    """ Кастомная валидация аргумента -C/--count """
+    service = BenchmarkService()
     try:
-        count = int(value)
-        if count < 1:
-            raise argparse.ArgumentTypeError("Количество запросов должно быть >= 1")
-        return count
-    except ValueError:
-        raise argparse.ArgumentTypeError("Количество запросов должно быть числом")
+        await service.benchmark(
+            hosts=args.hosts,
+            count=args.count,
+            input_file=args.file,
+            output_file=args.output
+        )
+    except HttpBenchBaseException as e:
+        print(f"Ошибка: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Неожиданная ошибка: {e}", file=sys.stderr)
+        sys.exit(1)
