@@ -1,4 +1,3 @@
-
 def format_benchmark_report(raw_results: dict[str, list[dict]]) -> str:
     lines = ["*" * 60, "РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ", "*" * 60]
 

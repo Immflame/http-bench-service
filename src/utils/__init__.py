@@ -1,1 +1,1 @@
-from .collect_statistics import collect_statistics
+from .report import format_benchmark_report
