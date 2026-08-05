@@ -1,3 +1,21 @@
+
+def format_benchmark_report(raw_results: dict[str, list[dict]]) -> str:
+    lines = ["*" * 60, "РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ", "*" * 60]
+
+    for host, responses in raw_results.items():
+        stats = collect_statistics(responses)
+        lines.append(f"\nHost: {host}")
+        lines.append(f"  Success: {stats['success']}")
+        lines.append(f"  Failed: {stats['failed']}")
+        lines.append(f"  Errors: {stats['errors']}")
+        lines.append(f"  Min: {stats['min'] * 1000:.2f} ms")
+        lines.append(f"  Max: {stats['max'] * 1000:.2f} ms")
+        lines.append(f"  Avg: {stats['avg'] * 1000:.2f} ms")
+        lines.append("-" * 40)
+
+    return '\n'.join(lines)
+
+
 def collect_statistics(responses: list[dict]) -> dict:
     success = 0
     failed = 0
@@ -7,6 +25,7 @@ def collect_statistics(responses: list[dict]) -> dict:
     for response in responses:
         if 'error' in response:
             errors += 1
+
         elif 'status_code' in response:
             if 200 <= response['status_code'] < 400:
                 success += 1
