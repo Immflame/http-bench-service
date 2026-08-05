@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "http-bench-service"
+version = "0.1.1"
+description = "HTTP benchmark service"
+readme = "README.md"
+authors = [
+    {name = "Aidar", email = "The.scorpion2006@yandex.ru"}
+]
+dependencies = [
+    "httpx>=0.28.1"
+]
+requires-python = ">=3.10"
+
+[project.scripts]
+bench = "src.main:start"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
