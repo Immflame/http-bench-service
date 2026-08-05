@@ -1,12 +1,19 @@
 import asyncio
-from src.client import HTTPClient, FileIOClient
-from src.utils import collect_statistics
+from src.client import AsyncHTTPClient, FileIOClient
+from src.utils import format_benchmark_report
 from src.exceptions import HttpBenchBaseException
 
 
 class BenchmarkService:
+    """
+    Сервис для проведения HTTP-бенчмарка
+
+    Attributes:
+        _http_client (AsyncHTTPClient): HTTP-клиент
+        _io_client (FileIOClient): Клиент для чтения и записи файлов
+    """
     def __init__(self):
-        self._http_client = HTTPClient()
+        self._http_client = AsyncHTTPClient()
         self._io_client = FileIOClient()
 
     async def benchmark(
@@ -16,61 +23,26 @@ class BenchmarkService:
             input_file: str | None = None,
             output_file: str | None = None
     ):
-        if hosts and input_file:
-            raise HttpBenchBaseException("Нельзя одновременно указывать -H и -F")
-
+        """ Запускает тестирование доступности хостов """
         target_hosts = hosts if hosts else self._io_client.read_lines(input_file)
         if not target_hosts:
             raise HttpBenchBaseException("Список хостов пуст")
 
-        tasks = []
-        task_to_host = []
-        for host in target_hosts:
-            for _ in range(count):
-                task = self._http_client.get(host)
-                tasks.append(task)
-                task_to_host.append(host)
+        async with self._http_client as http_client:
+            coroutines = []
+            for host in target_hosts:
+                for _ in range(count):
+                    coroutines.append(http_client.get(host))
 
-        responses = await asyncio.gather(*tasks, return_exceptions=True)
+            results = {host: [] for host in target_hosts}
+            for completed in asyncio.as_completed(coroutines): # Получает ответ от корутин по мере их выполнения
+                response = await completed
+                results[response['url']].append(response)
 
-        host_responses = {}
-        for host, response in zip(task_to_host, responses):
-            if host not in host_responses:
-                host_responses[host] = []
-
-            if isinstance(response, Exception):
-                host_responses[host].append({'url': host, 'error': str(response)})
-            else:
-                host_responses[host].append(response)
-
-        unique_hosts = list(dict.fromkeys(target_hosts))
-        results = {}
-        for host in unique_hosts:
-            stats = collect_statistics(host_responses[host])
-            results[host] = stats
-
-        output_text = self._format_results(results)
+        output_text = format_benchmark_report(results)
 
         if output_file:
             self._io_client.write_lines(output_file, [output_text])
             print(f"Результаты сохранены в {output_file}")
         else:
             print(output_text)
-
-        await self._http_client.close()
-
-    def _format_results(self, results: dict) -> str:
-        lines = []
-        lines.append("*" * 60)
-        lines.append("РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ")
-        lines.append("*" * 60)
-        for host, stats in results.items():
-            lines.append(f"\nHost: {host}")
-            lines.append(f"  Success: {stats['success']}")
-            lines.append(f"  Failed: {stats['failed']}")
-            lines.append(f"  Errors: {stats['errors']}")
-            lines.append(f"  Min: {stats['min'] * 1000:.2f} ms")
-            lines.append(f"  Max: {stats['max'] * 1000:.2f} ms")
-            lines.append(f"  Avg: {stats['avg'] * 1000:.2f} ms")
-            lines.append("-" * 40)
-        return '\n'.join(lines)
