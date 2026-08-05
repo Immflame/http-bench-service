@@ -6,6 +6,9 @@ from src.exceptions import HttpBenchBaseException
 
 
 async def main():
+
+    """ Точка входа в программу """
+
     args = parse_args()
     service = BenchmarkService()
     try:

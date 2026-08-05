@@ -1,4 +1,5 @@
 def format_benchmark_report(raw_results: dict[str, list[dict]]) -> str:
+    """ Возвращает строку со статистикой в читаемом формате """
     lines = ["*" * 60, "РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ", "*" * 60]
 
     for host, responses in raw_results.items():
@@ -16,6 +17,7 @@ def format_benchmark_report(raw_results: dict[str, list[dict]]) -> str:
 
 
 def collect_statistics(responses: list[dict]) -> dict:
+    """ Считает общую статистику по каждому хосту"""
     success = 0
     failed = 0
     errors = 0

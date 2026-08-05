@@ -5,6 +5,13 @@ from src.exceptions import HttpBenchBaseException
 
 
 class BenchmarkService:
+    """
+    Сервис для проведения HTTP-бенчмарка
+
+    Attributes:
+        _http_client (AsyncHTTPClient): HTTP-клиент
+        _io_client (FileIOClient): Клиент для чтения и записи файлов
+    """
     def __init__(self):
         self._http_client = AsyncHTTPClient()
         self._io_client = FileIOClient()
@@ -16,6 +23,7 @@ class BenchmarkService:
             input_file: str | None = None,
             output_file: str | None = None
     ):
+        """ Запускает тестирование доступности хостов """
         target_hosts = hosts if hosts else self._io_client.read_lines(input_file)
         if not target_hosts:
             raise HttpBenchBaseException("Список хостов пуст")
@@ -27,7 +35,7 @@ class BenchmarkService:
                     coroutines.append(http_client.get(host))
 
             results = {host: [] for host in target_hosts}
-            for completed in asyncio.as_completed(coroutines):
+            for completed in asyncio.as_completed(coroutines): # Получает ответ от корутин по мере их выполнения
                 response = await completed
                 results[response['url']].append(response)
 
