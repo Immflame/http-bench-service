@@ -1,6 +1,6 @@
 import asyncio
 from src.client import AsyncHTTPClient, FileIOClient
-from src.utils.report import format_benchmark_report
+from src.utils import format_benchmark_report
 from src.exceptions import HttpBenchBaseException
 
 

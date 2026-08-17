@@ -1,8 +1,8 @@
 import argparse
 import sys
-from src.service.service import BenchmarkService
+from src.service import BenchmarkService
 from src.exceptions import HttpBenchBaseException
-from src.utils.validators import validate_hosts_str, validate_count
+from src.utils import validate_hosts_str, validate_count
 
 
 async def cli():
