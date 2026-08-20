@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import sys
 from argparse import ArgumentTypeError
 from http_bench_service.benchmarker import Benchmarker
@@ -8,6 +9,17 @@ from http_bench_service.http_client import AsyncHTTPClient
 from http_bench_service.file_client import FileClient
 from time import perf_counter
 
+logger = logging.getLogger(__name__)
+
+def setup_logging(verbose: bool = False):
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 async def main():
     prog_start = perf_counter()
@@ -15,14 +27,14 @@ async def main():
     try:
         args = parser.parse_args()
     except ArgumentTypeError as e:
-        print(e, file=sys.stderr)
+        logger.error("%s", e)
         sys.exit(1)
-
+    setup_logging(verbose=args.verbose)
     file_client = FileClient()
     http_client = AsyncHTTPClient(
-        timeout=2.0,
+        timeout=args.timeout,
         max_concurrent_tasks=100,
-        max_keepalive_connections=30
+        max_keepalive_connections=args.max_keepalive_connections
     )
     bench = Benchmarker(http_client=http_client, file_client=file_client)
     try:
@@ -33,13 +45,14 @@ async def main():
             output_file=args.output
         )
     except BenchmarkBaseException as e:
-        print(f"Ошибка: {e}", file=sys.stderr)
+        logger.exception("Ошибка: %s", e)
         sys.exit(1)
     except Exception as e:
-        print(f"Неожиданная ошибка: {e}", file=sys.stderr)
+        logger.exception("Неожиданная ошибка: %s", e)
         sys.exit(1)
     finally:
-        print(f"Общее время выполнения: {perf_counter() - prog_start}")
+        finish = perf_counter() - prog_start
+        logging.info(f"Общее время выполнения - {finish} s")
 
 
 def entrypoint():

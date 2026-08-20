@@ -1,7 +1,9 @@
 import asyncio
+import logging
 from http_bench_service.http_client import AsyncHTTPClient
 from http_bench_service.file_client import FileClient
 
+logger = logging.getLogger(__name__)
 
 class Benchmarker:
     def __init__(self,
@@ -33,7 +35,7 @@ class Benchmarker:
 
         if output_file:
             self.__file_client.write_lines(output_file, [output_text])
-            print(f"Результаты сохранены в {output_file}")
+            logger.info("Результаты сохранены в %s", output_file)
         else:
             print(output_text)
 

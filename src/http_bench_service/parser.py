@@ -1,6 +1,9 @@
 from argparse import ArgumentParser, ArgumentTypeError
 from urllib.parse import urlparse
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Parser:
     def __init__(self):
@@ -27,6 +30,26 @@ class Parser:
             type=str,
             default=None,
             help='Файл для сохранения результатов'
+        )
+
+        self.parser.add_argument(
+            '--max-keepalive-connections',
+            type=int,
+            default=20,
+            help='Максимальное количество одновременных подключений (по умолчанию 20)'
+        )
+
+        self.parser.add_argument(
+            '--verbose',
+            action='store_true',
+            help='Включить подробный вывод (по умолчанию отключено)'
+        )
+
+        self.parser.add_argument(
+            '--timeout',
+            type=float,
+            default=3.0,
+            help='Таймаут в секундах (по умолчанию 3.0)'
         )
 
         group = self.parser.add_mutually_exclusive_group(required=True)

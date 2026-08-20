@@ -1,6 +1,9 @@
 import httpx
 import asyncio
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AsyncHTTPClient:
     def __init__(self,
@@ -18,19 +21,24 @@ class AsyncHTTPClient:
     async def get(self, url: str) -> dict:
         async with self.__semaphore:
             try:
+                logger.debug("Запрос к %s начат", url)
                 start = time.perf_counter()
                 response = await self.__client.get(url)
                 time_duration = time.perf_counter() - start
+                logger.debug("Запрос к %s окончен успешно", url)
                 return {
                     'url': url,
                     'time_duration': time_duration,
                     'status_code': response.status_code
                 }
-            except httpx.TimeoutException:
+            except httpx.TimeoutException as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'timeout'}
-            except httpx.NetworkError:
+            except httpx.NetworkError as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'network'}
-            except Exception:
+            except Exception as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'unknown'}
 
     async def close(self):
