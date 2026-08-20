@@ -34,7 +34,7 @@ async def main():
     http_client = AsyncHTTPClient(
         timeout=args.timeout,
         max_concurrent_tasks=100,
-        max_keepalive_connections=args.max_keepalive_connections
+        max_keepalive_connections=args.max_keepalive_conn
     )
     bench = Benchmarker(http_client=http_client, file_client=file_client)
     try:
