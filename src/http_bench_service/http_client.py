@@ -1,6 +1,9 @@
 import httpx
 import asyncio
+import time
+import logging
 
+logger = logging.getLogger(__name__)
 
 class AsyncHTTPClient:
     def __init__(self,
@@ -8,35 +11,38 @@ class AsyncHTTPClient:
                  max_concurrent_tasks: int = 100,
                  max_keepalive_connections: int = 10):
 
-        self._client = httpx.AsyncClient(
+        self.__client = httpx.AsyncClient(
             timeout=httpx.Timeout(timeout),
             limits=httpx.Limits(max_keepalive_connections=max_keepalive_connections),
             follow_redirects=True
         )
-        self._semaphore = asyncio.Semaphore(max_concurrent_tasks)
+        self.__semaphore = asyncio.Semaphore(max_concurrent_tasks)
 
     async def get(self, url: str) -> dict:
-        """ Создает GET запрос к url и возвращает время ответа и статус код """
-        async with self._semaphore:
+        async with self.__semaphore:
             try:
-                loop = asyncio.get_running_loop()
-                start = loop.time()
-                response = await self._client.get(url)
-                elapsed = loop.time() - start
+                logger.debug("Запрос к %s начат", url)
+                start = time.perf_counter()
+                response = await self.__client.get(url)
+                time_duration = time.perf_counter() - start
+                logger.debug("Запрос к %s окончен успешно", url)
                 return {
                     'url': url,
-                    'elapsed': elapsed,
+                    'time_duration': time_duration,
                     'status_code': response.status_code
                 }
-            except httpx.TimeoutException:
+            except httpx.TimeoutException as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'timeout'}
-            except httpx.NetworkError:
+            except httpx.NetworkError as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'network'}
-            except Exception:
+            except Exception as e:
+                logger.debug("Ошибка при запросе к %s: %s", url, e)
                 return {'url': url, 'error': 'unknown'}
 
     async def close(self):
-        await self._client.aclose()
+        await self.__client.aclose()
 
     async def __aenter__(self):
         return self

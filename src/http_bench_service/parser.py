@@ -1,13 +1,18 @@
-import os
 from argparse import ArgumentParser, ArgumentTypeError
 from urllib.parse import urlparse
+from importlib.metadata import version
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Parser:
     def __init__(self):
         self.parser = ArgumentParser(
             prog='bench',
+            usage='bench [-h] [-C COUNT] [-O OUTPUT] (-H HOSTS | -F FILE)',
             description='Тестирование доступности HTTP-серверов',
-            epilog="Пример: bench -H https://ya.ru -C 5"
+            epilog="Пример команды: bench -H https://ya.ru --count 5"
         )
         self.__add_arguments()
 
@@ -29,18 +34,51 @@ class Parser:
             help='Файл для сохранения результатов'
         )
 
-        group = self.parser.add_mutually_exclusive_group(required=True)
-        group.add_argument(
+        required_group = self.parser.add_mutually_exclusive_group(required=True)
+        required_group.add_argument(
             '-H', '--hosts',
             type=self.__validate_hosts,
             help='Хосты через запятую (например: https://ya.ru,https://google.com)'
         )
 
-        group.add_argument(
+        required_group.add_argument(
             '-F', '--file',
             type=self.__validate_input_file,
             help='Файл со списком хостов (один на строку)'
         )
+
+        config_group = self.parser.add_argument_group('Configuration')
+
+        config_group.add_argument(
+            '--max-keepalive-conn',
+            type=int,
+            default=20,
+            help='Максимальное количество одновременных подключений (по умолчанию 20)'
+        )
+
+        config_group.add_argument(
+            '--verbose',
+            action='store_true',
+            help='Включить подробный вывод (по умолчанию отключено)'
+        )
+
+        config_group.add_argument(
+            '--timeout',
+            type=float,
+            default=3.0,
+            help='Таймаут в секундах (по умолчанию 3.0)'
+        )
+
+        config_group.add_argument(
+            '-V', '--version',
+            action='version',
+            version=f'%(prog)s {self.get_version()}',
+            help='Версия программы'
+        )
+
+    @staticmethod
+    def get_version() -> str:
+        return version('http-bench-service')
 
     @staticmethod
     def __validate_hosts(value: str) -> list[str]:
