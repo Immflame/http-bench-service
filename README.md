@@ -40,20 +40,13 @@ git clone https://github.com/Immflame/http-bench-service.git
 ```
 cd http-bench-service
 ```
-3. Создайте виртуальное окружение и активируйте его:
+3. Создайте виртуальное окружение и активируйте его (используйте uv):
 ```
-python -m venv .venv
+uv sync
 ```
+4. Готово, программа готова к использованию ! Пример работы:
 ```
-.venv\Scripts\activate
-```
-5. Установите зависимости:
-```
-pip install -r requirements.txt
-```
-6. Готово, программа готова к использованию ! Пример работы:
-```
-python -m src.main -H https://ya.ru,https://google.com -C 5
+uv run bench -H https://ya.ru,https://google.com -C 5
 ```
 #### Пример вывода:
 ```
