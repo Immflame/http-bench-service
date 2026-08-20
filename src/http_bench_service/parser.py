@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, ArgumentTypeError
 from urllib.parse import urlparse
+from importlib.metadata import version
 import os
 import logging
 
@@ -32,6 +33,19 @@ class Parser:
             help='Файл для сохранения результатов'
         )
 
+        group = self.parser.add_mutually_exclusive_group(required=True)
+        group.add_argument(
+            '-H', '--hosts',
+            type=self.__validate_hosts,
+            help='Хосты через запятую (например: https://ya.ru,https://google.com)'
+        )
+
+        group.add_argument(
+            '-F', '--file',
+            type=self.__validate_input_file,
+            help='Файл со списком хостов (один на строку)'
+        )
+
         self.parser.add_argument(
             '--max-keepalive-connections',
             type=int,
@@ -52,18 +66,16 @@ class Parser:
             help='Таймаут в секундах (по умолчанию 3.0)'
         )
 
-        group = self.parser.add_mutually_exclusive_group(required=True)
-        group.add_argument(
-            '-H', '--hosts',
-            type=self.__validate_hosts,
-            help='Хосты через запятую (например: https://ya.ru,https://google.com)'
+        self.parser.add_argument(
+            '--version',
+            action='version',
+            version=f'%(prog)s {self.get_version()}',
+            help='Версия программы'
         )
 
-        group.add_argument(
-            '-F', '--file',
-            type=self.__validate_input_file,
-            help='Файл со списком хостов (один на строку)'
-        )
+    @staticmethod
+    def get_version() -> str:
+        return version('http-bench-service')
 
     @staticmethod
     def __validate_hosts(value: str) -> list[str]:

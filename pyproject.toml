@@ -1,6 +1,6 @@
 [project]
 name = "http-bench-service"
-version = "0.2.1"
+version = "0.2.3"
 description = "HTTP benchmark service"
 readme = "README.md"
 authors = [
