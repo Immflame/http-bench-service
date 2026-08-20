@@ -1,6 +1,6 @@
-import os
 from argparse import ArgumentParser, ArgumentTypeError
 from urllib.parse import urlparse
+import os
 
 class Parser:
     def __init__(self):

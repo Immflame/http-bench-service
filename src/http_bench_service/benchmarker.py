@@ -1,44 +1,38 @@
 import asyncio
 from http_bench_service.http_client import AsyncHTTPClient
 from http_bench_service.file_client import FileClient
-from http_bench_service.exceptions import BenchmarkBaseException
 
 
 class Benchmarker:
     def __init__(self,
                  http_client: AsyncHTTPClient,
-                 io_client: FileClient):
-
+                 file_client: FileClient):
         self.__http_client: AsyncHTTPClient = http_client
-        self.__io_client: FileClient = io_client
+        self.__file_client: FileClient = file_client
 
     async def benchmark(
             self,
             hosts: list[str] | None = None,
-            count: int = 1,
             input_file: str | None = None,
+            count: int = 1,
             output_file: str | None = None
     ):
-        """ Запускает тестирование доступности хостов """
-        target_hosts = hosts if hosts else self.__io_client.read_lines(input_file)
-        if not target_hosts:
-            raise BenchmarkBaseException("Список хостов пуст")
-
+        hosts = hosts if hosts else self.__file_client.read_lines(input_file)
         async with self.__http_client as http_client:
-            coroutines = []
-            for host in target_hosts:
+            tasks = []
+            for host in hosts:
                 for _ in range(count):
-                    coroutines.append(http_client.get(host))
+                    tasks.append(http_client.get(host))
 
-            results = {host: [] for host in target_hosts}
-            for completed in asyncio.as_completed(coroutines): # Получает ответ от корутин по мере их выполнения
-                response = await completed
-                results[response['url']].append(response)
+            results = {host: [] for host in hosts}
+            responses = await asyncio.gather(*tasks)
+            for res in responses:
+                results[res['url']].append(res)
 
         output_text = self.__format_benchmark_report(results)
 
         if output_file:
-            self.__io_client.write_lines(output_file, [output_text])
+            self.__file_client.write_lines(output_file, [output_text])
             print(f"Результаты сохранены в {output_file}")
         else:
             print(output_text)
@@ -78,8 +72,8 @@ class Benchmarker:
                 else:
                     failed += 1
 
-                if 'elapsed' in response and response['elapsed'] is not None:
-                    times.append(response['elapsed'])
+                if 'time_duration' in response and response['time_duration'] is not None:
+                    times.append(response['time_duration'])
 
         min_time = min(times) if times else 0.0
         max_time = max(times) if times else 0.0
